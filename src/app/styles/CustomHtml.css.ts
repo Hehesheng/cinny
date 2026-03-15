@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css';
+import { style, globalStyle } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 import { color, config, DefaultReset, toRem } from 'folds';
 import { ContainerColor } from './ContainerColor.css';
@@ -248,3 +248,45 @@ export const highlightText = style([
     color: 'black',
   },
 ]);
+
+export const MarkdownTable = style([
+  DefaultReset,
+  MarginSpaced,
+  {
+    borderCollapse: 'collapse',
+    width: '100%',
+  },
+]);
+
+globalStyle(`${MarkdownTable} th, ${MarkdownTable} td`, {
+  border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
+  padding: `${config.space.S100} ${config.space.S200}`,
+});
+
+globalStyle(`${MarkdownTable} th`, {
+  backgroundColor: color.SurfaceVariant.Container,
+  fontWeight: config.fontWeight.W500,
+});
+
+export const MarkdownBlock = style([
+  DefaultReset,
+  MarginSpaced,
+  {
+    border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
+    borderRadius: config.radii.R300,
+    overflow: 'hidden',
+  },
+]);
+
+export const MarkdownBlockHeader = style([
+  ContainerColor({ variant: 'Surface' }),
+  {
+    padding: `0 ${config.space.S200} 0 ${config.space.S300}`,
+    borderBottomWidth: config.borderWidth.B300,
+    gap: config.space.S200,
+  },
+]);
+
+export const MarkdownBlockContent = style({
+  padding: config.space.S300,
+});

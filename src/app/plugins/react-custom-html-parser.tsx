@@ -7,7 +7,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import {
+import parse, {
   Element,
   Text as DOMText,
   HTMLReactParserOptions,
@@ -41,6 +41,7 @@ import {
 import { onEnterOrSpace } from '../utils/keyboard';
 import { copyToClipboard, tryDecodeURIComponent } from '../utils/dom';
 import { useTimeoutToggle } from '../hooks/useTimeoutToggle';
+import { marked } from 'marked';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
@@ -240,23 +241,115 @@ export function CodeBlock({
       ? languageClass.replace('language-', '')
       : languageClass;
 
-  const LINE_LIMIT = 14;
-  const largeCodeBlock = useMemo(
-    () => extractTextFromChildren(children).split('\n').length > LINE_LIMIT,
-    [children]
-  );
+  const codeText = extractTextFromChildren(children);
 
+  const getMarkdownScore = (text: string): number => {
+    if (text.startsWith('#!')) return 0;
+
+    try {
+      const tokens = marked.lexer(text);
+      let score = 0;
+
+      for (const token of tokens) {
+        switch (token.type) {
+          case 'heading':
+            if ('depth' in token && token.depth <= 2) {
+              score += 4;
+            } else {
+              score += 2;
+            }
+            break;
+          case 'table':
+            score += 8;
+            break;
+          case 'list':
+            score += 2;
+            break;
+          case 'link':
+            if ('raw' in token && /^\[.+\]\(.+\)$/.test(token.raw)) {
+              score += 3;
+            }
+            break;
+          case 'blockquote':
+            score += 2;
+            break;
+        }
+      }
+      return score;
+    } catch {
+      return 0;
+    }
+  };
+
+  const explicitMarkdown = language === 'markdown' || language === 'md';
+  const autoScore = !language ? getMarkdownScore(codeText) : 0;
+  const highConfidence = explicitMarkdown || autoScore >= 8;
+
+  const [showRaw, setShowRaw] = useState(false);
+  const [forceRender, setForceRender] = useState(false);
   const [expanded, setExpand] = useState(false);
   const [copied, setCopied] = useTimeoutToggle();
 
+  const LINE_LIMIT = 14;
+  const largeCodeBlock = useMemo(() => codeText.split('\n').length > LINE_LIMIT, [codeText]);
+
+  const showRenderButton = autoScore >= 3 && !forceRender;
+  const shouldRenderMarkdown = highConfidence || forceRender;
+
   const handleCopy = () => {
-    copyToClipboard(extractTextFromChildren(children));
+    copyToClipboard(codeText);
     setCopied();
   };
 
   const toggleExpand = () => {
     setExpand(!expanded);
   };
+
+  if (shouldRenderMarkdown) {
+    const parsedMarkdown = marked.parse(codeText) as string;
+    const rendered = parse(parsedMarkdown, opts);
+
+    return (
+      <Text size="T300" as="div" className={css.MarkdownBlock}>
+        <Header variant="Surface" size="400" className={css.MarkdownBlockHeader}>
+          <Box grow="Yes">
+            <Text size="L400">Markdown</Text>
+          </Box>
+          <Box shrink="No" gap="200">
+            <Chip
+              variant="Surface"
+              fill="None"
+              radii="Pill"
+              onClick={() => setShowRaw(!showRaw)}
+              before={<Icon size="50" src={showRaw ? Icons.Eye : Icons.Code} />}
+            >
+              <Text size="B300">{showRaw ? 'Rendered' : 'Raw'}</Text>
+            </Chip>
+            <Chip
+              variant={copied ? 'Success' : 'Surface'}
+              fill="None"
+              radii="Pill"
+              onClick={handleCopy}
+              before={copied && <Icon size="50" src={Icons.Check} />}
+            >
+              <Text size="B300">{copied ? 'Copied' : 'Copy'}</Text>
+            </Chip>
+          </Box>
+        </Header>
+        <div className={css.MarkdownBlockContent}>
+          {showRaw ? (
+            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              {codeText}
+            </pre>
+          ) : typeof rendered === 'string' ? (
+            rendered
+          ) : (
+            rendered
+          )}
+        </div>
+      </Text>
+    );
+  }
 
   return (
     <Text size="T300" as="pre" className={css.CodeBlock}>
@@ -267,6 +360,17 @@ export function CodeBlock({
           </Text>
         </Box>
         <Box shrink="No" gap="200">
+          {showRenderButton && (
+            <Chip
+              variant="Surface"
+              fill="None"
+              radii="Pill"
+              onClick={() => setForceRender(true)}
+              before={<Icon size="50" src={Icons.Eye} />}
+            >
+              <Text size="B300">Render</Text>
+            </Chip>
+          )}
           <Chip
             variant={copied ? 'Success' : 'Surface'}
             fill="None"
@@ -410,6 +514,29 @@ export const getReactCustomHtmlParser = (
           );
         }
 
+        if (name === 'table') {
+          return (
+            <table {...props} className={css.MarkdownTable}>
+              {domToReact(children, opts)}
+            </table>
+          );
+        }
+        if (name === 'thead') {
+          return <thead {...props}>{domToReact(children, opts)}</thead>;
+        }
+        if (name === 'tbody') {
+          return <tbody {...props}>{domToReact(children, opts)}</tbody>;
+        }
+        if (name === 'tr') {
+          return <tr {...props}>{domToReact(children, opts)}</tr>;
+        }
+        if (name === 'th') {
+          return <th {...props}>{domToReact(children, opts)}</th>;
+        }
+        if (name === 'td') {
+          return <td {...props}>{domToReact(children, opts)}</td>;
+        }
+
         if (name === 'code') {
           if (parent && 'name' in parent && parent.name === 'pre') {
             const codeReact = domToReact(children, opts);
@@ -418,6 +545,7 @@ export const getReactCustomHtmlParser = (
               if (lang === 'language-rs') lang = 'language-rust';
               else if (lang === 'language-js') lang = 'language-javascript';
               else if (lang === 'language-ts') lang = 'language-typescript';
+
               return (
                 <ErrorBoundary fallback={<code {...props}>{codeReact}</code>}>
                   <Suspense fallback={<code {...props}>{codeReact}</code>}>
