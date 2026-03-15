@@ -6,6 +6,7 @@ import { marked } from 'marked';
 import { MessageEmptyContent } from './content';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { highlightText, scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
+import * as css from '../../styles/CustomHtml.css';
 
 type RenderBodyProps = {
   body: string;

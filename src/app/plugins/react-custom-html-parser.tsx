@@ -624,9 +624,10 @@ export const getReactCustomHtmlParser = (
       }
 
       if (domNode instanceof DOMText) {
+        const parentName = domNode.parent && 'name' in domNode.parent ? domNode.parent.name : null;
+        const tableElements = ['table', 'thead', 'tbody', 'tr', 'th', 'td'];
         const linkify =
-          !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'code') &&
-          !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'a');
+          parentName !== 'code' && parentName !== 'a' && !tableElements.includes(parentName || '');
 
         let jsx = scaleSystemEmoji(domNode.data);
 
