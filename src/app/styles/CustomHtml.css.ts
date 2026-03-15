@@ -290,3 +290,7 @@ export const MarkdownBlockHeader = style([
 export const MarkdownBlockContent = style({
   padding: config.space.S300,
 });
+
+export const MarkdownBody = style({
+  lineHeight: 1.2,
+});
