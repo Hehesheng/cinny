@@ -248,34 +248,31 @@ export function CodeBlock({
 
     try {
       const tokens = marked.lexer(text);
-      let score = 0;
+      const seenTypes = new Set<string>();
 
-      for (const token of tokens) {
-        switch (token.type) {
-          case 'heading':
-            if ('depth' in token && token.depth <= 2) {
-              score += 4;
-            } else {
-              score += 2;
-            }
-            break;
-          case 'table':
-            score += 8;
-            break;
-          case 'list':
-            score += 2;
-            break;
-          case 'link':
-            if ('raw' in token && /^\[.+\]\(.+\)$/.test(token.raw)) {
-              score += 3;
-            }
-            break;
-          case 'blockquote':
-            score += 2;
-            break;
+      tokens.forEach((token) => {
+        if (token.type === 'heading') {
+          seenTypes.add('heading');
+        } else if (token.type === 'table') {
+          seenTypes.add('table');
+        } else if (token.type === 'list') {
+          seenTypes.add('list');
+        } else if (token.type === 'link' && 'raw' in token && /^\[.+\]\(.+\)$/.test(token.raw)) {
+          seenTypes.add('link');
+        } else if (token.type === 'blockquote') {
+          seenTypes.add('blockquote');
         }
-      }
-      return score;
+      });
+
+      const scoreMap: Record<string, number> = {
+        table: 5,
+        heading: 4,
+        list: 3,
+        link: 2,
+        blockquote: 2,
+      };
+
+      return Array.from(seenTypes).reduce((sum, type) => sum + (scoreMap[type] || 0), 0);
     } catch {
       return 0;
     }
@@ -283,7 +280,7 @@ export function CodeBlock({
 
   const explicitMarkdown = language === 'markdown' || language === 'md';
   const autoScore = !language ? getMarkdownScore(codeText) : 0;
-  const highConfidence = explicitMarkdown || autoScore >= 8;
+  const highConfidence = explicitMarkdown || autoScore >= 5;
 
   const [showRaw, setShowRaw] = useState(false);
   const [forceRender, setForceRender] = useState(false);
@@ -293,7 +290,7 @@ export function CodeBlock({
   const LINE_LIMIT = 14;
   const largeCodeBlock = useMemo(() => codeText.split('\n').length > LINE_LIMIT, [codeText]);
 
-  const showRenderButton = autoScore >= 3 && !forceRender;
+  const showRenderButton = autoScore >= 3 && autoScore < 5 && !forceRender;
   const shouldRenderMarkdown = highConfidence || forceRender;
 
   const handleCopy = () => {
@@ -341,8 +338,6 @@ export function CodeBlock({
             <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {codeText}
             </pre>
-          ) : typeof rendered === 'string' ? (
-            rendered
           ) : (
             rendered
           )}
