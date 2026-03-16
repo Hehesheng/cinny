@@ -31,6 +31,7 @@ import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
 import { testMatrixTo } from '../plugins/matrix-to';
 import { IImageContent } from '../../types/matrix/common';
+import { RenderMode, useRenderMode } from '../state/messageRenderMode';
 
 type RenderMessageContentProps = {
   displayName: string;
@@ -44,6 +45,7 @@ type RenderMessageContentProps = {
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
   outlineAttachment?: boolean;
+  renderMode?: RenderMode;
 };
 export function RenderMessageContent({
   displayName,
@@ -57,6 +59,7 @@ export function RenderMessageContent({
   htmlReactParserOptions,
   linkifyOpts,
   outlineAttachment,
+  renderMode,
 }: RenderMessageContentProps) {
   const renderUrlsPreview = (urls: string[]) => {
     const filteredUrls = urls.filter((url) => !testMatrixTo(url));
@@ -142,6 +145,7 @@ export function RenderMessageContent({
           />
         )}
         renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
+        renderMode={renderMode}
       />
     );
   }
@@ -161,6 +165,7 @@ export function RenderMessageContent({
           />
         )}
         renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
+        renderMode={renderMode}
       />
     );
   }
@@ -179,6 +184,7 @@ export function RenderMessageContent({
           />
         )}
         renderUrlsPreview={urlPreview ? renderUrlsPreview : undefined}
+        renderMode={renderMode}
       />
     );
   }
@@ -265,4 +271,16 @@ export function RenderMessageContent({
   }
 
   return <UnsupportedContent />;
+}
+
+type MessageContentWithRenderModeProps = Omit<RenderMessageContentProps, 'renderMode'> & {
+  eventId: string;
+};
+
+export function MessageContentWithRenderMode({
+  eventId,
+  ...props
+}: MessageContentWithRenderModeProps) {
+  const renderMode = useRenderMode(eventId);
+  return <RenderMessageContent {...props} renderMode={renderMode} />;
 }

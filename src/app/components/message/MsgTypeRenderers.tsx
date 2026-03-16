@@ -29,6 +29,7 @@ import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
 import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
 import { FileHeader, FileDownloadButton } from './FileHeader';
+import { RenderMode } from '../../state/messageRenderMode';
 
 export function MBadEncrypted() {
   return (
@@ -68,6 +69,7 @@ export function BrokenContent() {
 type RenderBodyProps = {
   body: string;
   customBody?: string;
+  renderMode?: RenderMode;
 };
 type MTextProps = {
   edited?: boolean;
@@ -75,8 +77,16 @@ type MTextProps = {
   renderBody: (props: RenderBodyProps) => ReactNode;
   renderUrlsPreview?: (urls: string[]) => ReactNode;
   style?: CSSProperties;
+  renderMode?: RenderMode;
 };
-export function MText({ edited, content, renderBody, renderUrlsPreview, style }: MTextProps) {
+export function MText({
+  edited,
+  content,
+  renderBody,
+  renderUrlsPreview,
+  style,
+  renderMode,
+}: MTextProps) {
   const { body, formatted_body: customBody } = content;
 
   if (typeof body !== 'string') return <BrokenContent />;
@@ -94,6 +104,7 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
         {renderBody({
           body: trimmedBody,
           customBody: typeof customBody === 'string' ? customBody : undefined,
+          renderMode,
         })}
         {edited && <MessageEditedContent />}
       </MessageTextBody>
@@ -108,6 +119,7 @@ type MEmoteProps = {
   content: Record<string, unknown>;
   renderBody: (props: RenderBodyProps) => ReactNode;
   renderUrlsPreview?: (urls: string[]) => ReactNode;
+  renderMode?: RenderMode;
 };
 export function MEmote({
   displayName,
@@ -115,6 +127,7 @@ export function MEmote({
   content,
   renderBody,
   renderUrlsPreview,
+  renderMode,
 }: MEmoteProps) {
   const { body, formatted_body: customBody } = content;
 
@@ -134,6 +147,7 @@ export function MEmote({
         {renderBody({
           body: trimmedBody,
           customBody: typeof customBody === 'string' ? customBody : undefined,
+          renderMode,
         })}
         {edited && <MessageEditedContent />}
       </MessageTextBody>
@@ -147,8 +161,15 @@ type MNoticeProps = {
   content: Record<string, unknown>;
   renderBody: (props: RenderBodyProps) => ReactNode;
   renderUrlsPreview?: (urls: string[]) => ReactNode;
+  renderMode?: RenderMode;
 };
-export function MNotice({ edited, content, renderBody, renderUrlsPreview }: MNoticeProps) {
+export function MNotice({
+  edited,
+  content,
+  renderBody,
+  renderUrlsPreview,
+  renderMode,
+}: MNoticeProps) {
   const { body, formatted_body: customBody } = content;
 
   if (typeof body !== 'string') return <BrokenContent />;
@@ -166,6 +187,7 @@ export function MNotice({ edited, content, renderBody, renderUrlsPreview }: MNot
         {renderBody({
           body: trimmedBody,
           customBody: typeof customBody === 'string' ? customBody : undefined,
+          renderMode,
         })}
         {edited && <MessageEditedContent />}
       </MessageTextBody>

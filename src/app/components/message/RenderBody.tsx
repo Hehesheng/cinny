@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import parse, { HTMLReactParserOptions } from 'html-react-parser';
 import Linkify from 'linkify-react';
 import { Opts } from 'linkifyjs';
@@ -6,11 +6,12 @@ import { marked } from 'marked';
 import { MessageEmptyContent } from './content';
 import { sanitizeCustomHtml } from '../../utils/sanitize';
 import { highlightText, scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
-import * as css from '../../styles/CustomHtml.css';
+import { RenderMode } from '../../state/messageRenderMode';
 
 type RenderBodyProps = {
   body: string;
   customBody?: string;
+  renderMode?: RenderMode;
 
   highlightRegex?: RegExp;
   htmlReactParserOptions: HTMLReactParserOptions;
@@ -55,22 +56,34 @@ const hasMarkdownFeatures = (text: string): boolean => {
 export function RenderBody({
   body,
   customBody,
+  renderMode = 'html',
   highlightRegex,
   htmlReactParserOptions,
   linkifyOpts,
-}: RenderBodyProps) {
-  if (body === '') <MessageEmptyContent />;
+}: RenderBodyProps): ReactElement | null {
+  if (body === '') return <MessageEmptyContent />;
+
+  if (renderMode === 'raw_body') {
+    return (
+      <Linkify options={linkifyOpts}>
+        {highlightRegex
+          ? highlightText(highlightRegex, scaleSystemEmoji(body))
+          : scaleSystemEmoji(body)}
+      </Linkify>
+    );
+  }
+
+  if (renderMode === 'markdown') {
+    return <>{parse(marked.parse(body) as string, htmlReactParserOptions)}</>;
+  }
+
   if (customBody) {
-    if (customBody === '') <MessageEmptyContent />;
-    return parse(sanitizeCustomHtml(customBody), htmlReactParserOptions);
+    if (customBody === '') return <MessageEmptyContent />;
+    return <>{parse(sanitizeCustomHtml(customBody), htmlReactParserOptions)}</>;
   }
 
   if (hasMarkdownFeatures(body)) {
-    const rendered = parse(marked.parse(body) as string, htmlReactParserOptions);
-    if (highlightRegex && typeof rendered === 'object') {
-      return rendered;
-    }
-    return rendered;
+    return <>{parse(marked.parse(body) as string, htmlReactParserOptions)}</>;
   }
 
   return (

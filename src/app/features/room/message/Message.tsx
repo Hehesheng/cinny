@@ -59,6 +59,7 @@ import {
   mxcUrlToHttp,
 } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
+import { useRenderMode, useSetRenderMode, RenderMode } from '../../../state/messageRenderMode';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';
@@ -384,6 +385,42 @@ export const MessagePinItem = as<
     >
       <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
         {isPinned ? 'Unpin Message' : 'Pin Message'}
+      </Text>
+    </MenuItem>
+  );
+});
+
+export const MessageRenderModeItem = as<
+  'button',
+  {
+    eventId: string;
+    mode: RenderMode;
+    onClose?: () => void;
+  }
+>(({ eventId, mode, onClose, ...props }, ref) => {
+  const renderMode = useRenderMode(eventId);
+  const setRenderMode = useSetRenderMode();
+
+  const modeLabels: Record<RenderMode, string> = {
+    html: 'HTML',
+    markdown: 'Markdown',
+    raw_body: 'Raw',
+  };
+
+  return (
+    <MenuItem
+      size="300"
+      radii="300"
+      onClick={() => {
+        setRenderMode(eventId, mode);
+        onClose?.();
+      }}
+      after={renderMode === mode ? <Icon size="100" src={Icons.Check} /> : undefined}
+      {...props}
+      ref={ref}
+    >
+      <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+        {modeLabels[mode]}
       </Text>
     </MenuItem>
   );
@@ -721,6 +758,10 @@ export const Message = as<'div', MessageProps>(
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const senderId = mEvent.getSender() ?? '';
+    const eventId = mEvent.getId() ?? '';
+
+    const renderMode = useRenderMode(eventId);
+    const setRenderMode = useSetRenderMode();
 
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
@@ -959,6 +1000,18 @@ export const Message = as<'div', MessageProps>(
                     <Icon src={Icons.Pencil} size="100" />
                   </IconButton>
                 )}
+                <IconButton
+                  onClick={() => {
+                    setRenderMode(eventId, renderMode === 'html' ? 'markdown' : 'html');
+                  }}
+                  variant={renderMode === 'markdown' ? 'Primary' : 'SurfaceVariant'}
+                  fill={renderMode === 'markdown' ? 'Soft' : undefined}
+                  size="300"
+                  radii="300"
+                  title={renderMode === 'html' ? 'Switch to Markdown' : 'Switch to HTML'}
+                >
+                  <Icon src={Icons.Code} size="100" />
+                </IconButton>
                 <PopOut
                   anchor={menuAnchor}
                   position="Bottom"
@@ -1085,6 +1138,24 @@ export const Message = as<'div', MessageProps>(
                             />
                           )}
                           <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                          <Line size="300" />
+                          <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                            <MessageRenderModeItem
+                              eventId={mEvent.getId() ?? ''}
+                              mode="html"
+                              onClose={closeMenu}
+                            />
+                            <MessageRenderModeItem
+                              eventId={mEvent.getId() ?? ''}
+                              mode="markdown"
+                              onClose={closeMenu}
+                            />
+                            <MessageRenderModeItem
+                              eventId={mEvent.getId() ?? ''}
+                              mode="raw_body"
+                              onClose={closeMenu}
+                            />
+                          </Box>
                           {canPinEvent && (
                             <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           )}

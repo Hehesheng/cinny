@@ -106,7 +106,10 @@ import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { GetContentCallback, MessageEvent, StateEvent } from '../../../types/matrix/room';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
-import { RenderMessageContent } from '../../components/RenderMessageContent';
+import {
+  RenderMessageContent,
+  MessageContentWithRenderMode,
+} from '../../components/RenderMessageContent';
 import { Image } from '../../components/media';
 import { ImageViewer } from '../../components/image-viewer';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
@@ -127,6 +130,7 @@ import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/u
 import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { useRenderMode } from '../../state/messageRenderMode';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -1096,7 +1100,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             {mEvent.isRedacted() ? (
               <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
             ) : (
-              <RenderMessageContent
+              <MessageContentWithRenderMode
+                eventId={mEventId}
                 displayName={senderDisplayName}
                 msgType={mEvent.getContent().msgtype ?? ''}
                 ts={mEvent.getTs()}
@@ -1202,7 +1207,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                   const senderDisplayName =
                     getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
                   return (
-                    <RenderMessageContent
+                    <MessageContentWithRenderMode
+                      eventId={mEventId}
                       displayName={senderDisplayName}
                       msgType={mEvent.getContent().msgtype ?? ''}
                       ts={mEvent.getTs()}
