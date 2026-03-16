@@ -9,7 +9,7 @@ const renderModeAtom = atom<RenderModeMap>(new Map());
 
 export const useRenderMode = (eventId: string) => {
   const modeMap = useAtomValue(renderModeAtom);
-  return modeMap.get(eventId) ?? 'html';
+  return modeMap.get(eventId) ?? 'markdown';
 };
 
 export const useSetRenderMode = () => {
