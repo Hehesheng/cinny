@@ -74,7 +74,7 @@ export function RenderBody({
   }
 
   if (renderMode === 'markdown') {
-    return <>{parse(marked.parse(body) as string, htmlReactParserOptions)}</>;
+    return <>{parse(marked.parse(body, { breaks: true }) as string, htmlReactParserOptions)}</>;
   }
 
   if (customBody) {
@@ -83,7 +83,7 @@ export function RenderBody({
   }
 
   if (hasMarkdownFeatures(body)) {
-    return <>{parse(marked.parse(body) as string, htmlReactParserOptions)}</>;
+    return <>{parse(marked.parse(body, { breaks: true }) as string, htmlReactParserOptions)}</>;
   }
 
   return (
