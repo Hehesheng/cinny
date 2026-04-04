@@ -13,9 +13,8 @@ RUN npm run build
 ## App
 FROM nginx:1.29.5-alpine
 
-COPY --from=builder /src/dist /app
+COPY --from=builder --chown=nginx:nginx /src/dist /app
 COPY --from=builder /src/docker-nginx.conf /etc/nginx/conf.d/default.conf
 
 RUN rm -rf /usr/share/nginx/html \
-  && ln -s /app /usr/share/nginx/html \
-  && chown -R nginx:nginx /app
+  && ln -s /app /usr/share/nginx/html
