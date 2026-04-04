@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css';
+import { style, globalStyle } from '@vanilla-extract/css';
 import { DefaultReset, color, config } from 'folds';
 
 export const TextViewer = style([
@@ -38,4 +38,18 @@ export const TextViewerPre = style([
 
 export const TextViewerPrePadding = style({
   padding: config.space.S600,
+});
+
+// Ensure markdown-body has proper padding
+globalStyle('.markdown-body', {
+  padding: config.space.S600,
+  boxSizing: 'border-box',
+});
+
+globalStyle('.markdown-body > *:first-child', {
+  marginTop: 0,
+});
+
+globalStyle('.markdown-body > *:last-child', {
+  marginBottom: 0,
 });

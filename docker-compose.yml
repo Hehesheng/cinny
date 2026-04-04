@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  cinny:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cinny:latest
+    container_name: cinny
+    ports:
+      - '8080:80'
+    restart: unless-stopped

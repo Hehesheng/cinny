@@ -46,6 +46,11 @@ export const TEXT_MIME_TYPE = [
   'text/markdown',
 ];
 
+export const MARKDOWN_MIME_TYPES = ['text/markdown', 'text/x-markdown'];
+
+export const isMarkdownMimeType = (mimeType: string): boolean =>
+  MARKDOWN_MIME_TYPES.includes(mimeType);
+
 export const READABLE_TEXT_MIME_TYPES = [
   'application/json',
   'application/x-sh',
